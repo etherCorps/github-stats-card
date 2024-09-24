@@ -1,2 +1,5 @@
-<h1>Welcome to SvelteKit</h1>
-<p>Visit <a href="https://kit.svelte.dev">kit.svelte.dev</a> to read the documentation</p>
+   
+   <div class="flex flex-col justify-center items-center mt-48">
+    <h1>Work in progress...
+    </h1>
+   </div>
