@@ -20,4 +20,5 @@
     <span class="sr-only">Toggle theme</span>
 </Button>
 </div>
+
 <slot />
