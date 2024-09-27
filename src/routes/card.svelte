@@ -22,17 +22,19 @@
     };
 </script>
 
-<div class="flex flex-col justify-center items-center mt-48 w-full">
-    <BorderBeam size={300} duration={12} />
-    <div class="flex flex-row w-2/4 h-auto p-4 gap-x-5 rounded-lg border-black items-center justify-center">
+<article
+        class="flex max-w-xl flex-col items-start justify-between relative rounded-3xl p-7 border border-gray-700/70 bg-background mt-[12%]"
+>
+    <BorderBeam size={300} duration={7} />
+    <div class="flex flex-row h-auto p-4 gap-x-5 rounded-lg border-black items-center justify-center">
         <div class="w-fit">
             <img class="size-32 rounded-lg" src={data.avatarUrl} alt="avatar">
         </div>
         <div class="flex flex-col">
-            <h1 class="text-2xl mb-2">{data.username} ({data.name ?? 'Not available'})</h1>
+            <a href="" class="text-2xl mb-2">{data.username} ({data.name ?? 'Not available'})</a>
             <div>No of Public repository: {data.repos}</div>
             <div>Created At: {getProfileDateJoined(data)}</div>
             <div>contributions: {data.contributions}</div>
         </div>
     </div>
-</div>
+</article>
