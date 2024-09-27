@@ -1,25 +1,35 @@
 <script lang="ts">
-   import type { PageData } from "./$types";
-   import { goto } from '$app/navigation';
-   import { page } from '$app/stores';
-  import Card from "./card.svelte";
-   export let data: PageData;
-   // console.log(data);
-   let username:string;
+    import type {PageData} from "./$types";
+    import {goto} from '$app/navigation';
+    import {page} from '$app/stores';
+    import ProfileCard from "./card.svelte";
+    import * as Alert from "$lib/components/ui/alert/index.js";
+    import { queryParam } from 'sveltekit-search-params';
 
-
-   const updateSearchParams = (key:string,value:string)=>{
-    const searchParams = new URLSearchParams($page.url.search);
-    searchParams.set(key,value);
-    goto(`?${searchParams.toString()}`);
- };
+    export let data: PageData;
+    const username = queryParam('username');
+    const updateSearchParams = (value: string) => {
+        if (!value) return;
+        username.set(value);
+    };
 </script>
-<form class="flex flex-row justify-center gap-2 mt-4" on:submit|preventDefault={()=>updateSearchParams('username',username.toString())}>
-   <input class=" w-48 border-[1px] border-gray-300 rounded-md p-2" type="text" bind:value={username} placeholder="Username">
-   <input class="border-[1px] border-gray-300 rounded-md p-2 cursor-pointer bg-blue-700 text-white"  type="submit">
+<form class="flex flex-row justify-center gap-2 mt-4"
+      on:submit|preventDefault={() =>
+         updateSearchParams($username || '')
+      }>
+    <input class=" w-48 border-[1px] border-gray-300 rounded-md p-2" type="text" on:change={(e) => $username = e.target.value}
+           placeholder="Username">
+    <input class="border-[1px] border-gray-300 rounded-md p-2 cursor-pointer bg-blue-700 text-white" type="submit">
 </form>
 
-{#if data.login}
-<Card {data}/>
+{#if !data.error}
+    <ProfileCard data={data.userData}/>
+{:else }
+    <div class="flex flex-col justify-center items-center mt-48 ">
+        <Alert.Root variant="destructive" class="max-w-3xl">
+            <Alert.Title>Error - {data.status}</Alert.Title>
+            <Alert.Description>{data.message}</Alert.Description>
+        </Alert.Root>
+    </div>
 {/if}
  

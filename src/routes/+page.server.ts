@@ -1,60 +1,82 @@
 import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { AUTH_TOKEN } from '$env/static/private';
+import {DEFAULT_USERNAME} from "$lib/utils";
 
 export type UserData = {
-    login: string;
-    name: string;
-    avatarUrl: string;
-    repos: number;
-    createdAt: string;
+    username: string; // login
+    name: string; // name
+    avatarUrl: string; // avatar_url
+    repos: number; // public_repo
+    createdAt: string; // created_at
     contributions?: number; // Optional contributions field
 };
 
-export async function load({ fetch, url }): Promise<UserData> {
-    let data: UserData = {};
+type ReturnHelper = {
+    status: number
+    error: boolean
+    userData?: UserData;
+    message?: string
+}
+
+function returnHelper(data: ReturnHelper) {
+    return data
+}
+
+async function request(url: string, method: string = 'GET', body?: Record<string, any>) {
+    const requestInit: RequestInit = {
+        method,
+        headers: {
+            Authorization: `Bearer ${AUTH_TOKEN}`,
+        }
+    }
+
+    if (body) {
+        requestInit.body = JSON.stringify(body);
+    }
+
+    return fetch(url, requestInit)
+}
+
+export const load: PageServerLoad = async ({ fetch, url }) => {
+    const username = url.searchParams.get('username') || DEFAULT_USERNAME;
     try {
-        const username = url.searchParams.get('username') || '';
+        const [userDataResponse, contributionResponse] = await Promise.all([
+            request(`https://api.github.com/users/${username}`),
+            getContributions(username)]
+        )
 
-        if(!username) {
-            error(404, {message: 'Username not found.'})
+        if (!userDataResponse.ok || !contributionResponse.ok) {
+            return returnHelper({
+                status: !userDataResponse.ok ? userDataResponse.status : contributionResponse.status,
+                error: true,
+                message: !userDataResponse.ok ? userDataResponse.statusText : contributionResponse.statusText,
+            })
         }
 
-        const response = await fetch(`https://api.github.com/users/${username}`, {
-            method: 'GET',
-            headers: {
-                Authorization: `Bearer ${AUTH_TOKEN}`,
-            },
-        });
+        const [userDataJson, contributionsJson] = await Promise.all([
+            userDataResponse.json(), contributionResponse.json()
+        ])
 
-        if (!response.ok) {
-            console.error(`Error: ${response.statusText}`);
-            console.error(`Error: ${response.status}`);
-            throw new Error(`Error: ${response.statusText}`); 
-        }
-
-        data = await response.json() as UserData;
-
-        const contributionResponse = await getContributions(AUTH_TOKEN, username);
-        console.log(JSON.stringify(contributionResponse, null, 2));
-        if (contributionResponse.ok) {
-            const contributionData = await contributionResponse.json();
-            console.log(JSON.stringify(contributionData, null, 2));
-            data.contributions = contributionData.data.user.contributionsCollection.contributionCalendar.totalContributions;
-        }
-
+        return returnHelper({
+            status: 200,
+            error: false,
+            userData: {
+                contributions: contributionsJson.data.user.contributionsCollection.contributionCalendar.totalContributions,
+                avatarUrl: userDataJson.avatar_url,
+                username: userDataJson.login,
+                repos: userDataJson.public_repos,
+                createdAt: userDataJson?.created_at,
+                name: userDataJson.name
+            }
+        })
     } catch (error) {
         throw error; // Rethrow the original error
     }
-
-    return data;
 }
 
-async function getContributions(token: string, username: string) {
-    const headers = {
-        Authorization: `Bearer ${token}`,
-    };
-    const body = {
+async function getContributions(username: string) {
+    return request("https://api.github.com/graphql", "POST", {
         query: `query {
             user(login: "${username}") {
               name
@@ -65,11 +87,5 @@ async function getContributions(token: string, username: string) {
               }
             }
           }`,
-    };
-
-    return fetch('https://api.github.com/graphql', {
-        method: 'POST',
-        body: JSON.stringify(body),
-        headers,
-    });
+    })
 }

@@ -60,3 +60,5 @@ export const flyAndScale = (
 		easing: cubicOut
 	};
 };
+
+export const DEFAULT_USERNAME="ATI-Ritik"
