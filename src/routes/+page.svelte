@@ -19,7 +19,7 @@
    <input class="border-[1px] border-gray-300 rounded-md p-2 cursor-pointer bg-blue-700 text-white"  type="submit">
 </form>
 
-{#if data.username}
+{#if data.login}
 <Card {data}/>
 {/if}
  
